@@ -698,17 +698,12 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
         <button class="ia-btn-copy" onclick="copiarResultadoIA()">📋 Copiar texto</button>
         <button class="ia-btn-copy" onclick="inserirNaTabela()">📥 Inserir na tabela</button>
       </div>
-      <div class="ia-api-row">
-        <label>🔑 Chave API (Google Gemini):</label>
-        <input type="password" id="ia-api-key" placeholder="Cole sua chave API aqui..." oninput="salvarApiKey(this.value)">
-        <span class="ia-api-hint">Obtenha grátis em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#7c3aed;">aistudio.google.com/apikey</a></span>
-      </div>
+
     </div>
   </div>
 
   <!-- RODAPÉ -->
   <div class="doc-footer">
-    <span contenteditable="true" spellcheck="false">Documento gerado automaticamente</span>
     <span id="footer-semana" contenteditable="true" spellcheck="false">Semana: 13/04/2026 – 17/04/2026</span>
     <span contenteditable="true" spellcheck="false">Educação Infantil · Pré-escolar</span>
   </div>
@@ -1304,17 +1299,10 @@ function toggleIAPanel() {
   icon.classList.toggle('open');
 }
 
-function salvarApiKey(val) {
-  localStorage.setItem('planejamento-gemini-key', val);
-}
-
-function carregarApiKey() {
-  const saved = localStorage.getItem('planejamento-gemini-key');
-  if (saved) document.getElementById('ia-api-key').value = saved;
-}
+const _GEMINI_KEY = 'AIzaSyBYY6_vopEXWw_Y7dT0Re6hOJcYoeQz9Ik';
 
 async function gerarSugestaoIA() {
-  const apiKey = document.getElementById('ia-api-key').value.trim();
+  const apiKey = _GEMINI_KEY;
   const faixa = document.getElementById('ia-faixa');
   const tipo = document.getElementById('ia-tipo');
   const tema = document.getElementById('ia-tema').value.trim();
@@ -1325,10 +1313,7 @@ async function gerarSugestaoIA() {
   const faixaTexto = faixa.options[faixa.selectedIndex].text;
   const tipoTexto = tipo.options[tipo.selectedIndex].text;
 
-  if (!apiKey) {
-    resultDiv.innerHTML = '<span style="color:#c04040;">⚠️ Insira sua chave API do Google Gemini para usar a IA. Obtenha grátis em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#7c3aed;">aistudio.google.com/apikey</a></span>';
-    return;
-  }
+
 
   let systemPrompt = `Você é uma pedagoga especialista em Educação Infantil brasileira, com profundo conhecimento da BNCC (Base Nacional Comum Curricular). Sua função é criar sugestões pedagógicas de alta qualidade para professoras de Educação Infantil.`;
 
@@ -1411,7 +1396,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initDateInput();
   aplicarSemana();
   carregarFonte();
-  carregarApiKey();
+
 });
 
 // Quando muda a data, reconstrói os toggles

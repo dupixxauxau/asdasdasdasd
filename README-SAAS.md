@@ -2,22 +2,53 @@
 
 Sistema SaaS para o Planejamento Semanal de Educacao Infantil com controle de usuarios, licencas, trial e pagamentos via Mercado Pago.
 
-## Inicio Rapido
+## Inicio Rapido (Windows)
+
+1. Instale o **PostgreSQL**: https://www.postgresql.org/download/windows/
+   - Durante a instalacao, anote a senha do usuario `postgres`
+   - Abra o **pgAdmin** e crie o banco `planejamento_saas`
+2. Clique duas vezes no **start.bat**
+   - Na primeira vez, o Notepad abre o `.env` — coloque a senha do PostgreSQL em `DB_PASS`
+   - Salve, feche o Notepad e pressione ENTER
+3. Acesse: `http://localhost:3001`
+
+Admin: `admin@planejamento.com` / `admin123`
+
+## Inicio Rapido (Linux)
 
 ```bash
-# 1. Criar banco PostgreSQL
 sudo -u postgres createdb planejamento_saas
-
-# 2. Configurar
 cp backend/.env.example backend/.env
-nano backend/.env   # edite com suas credenciais
-
-# 3. Iniciar tudo
+nano backend/.env
+chmod +x start.sh
 ./start.sh
 ```
 
-Acesse: `http://localhost:3001`
-Admin: `admin@planejamento.com` / `admin123`
+## Deploy na VPS Windows
+
+### 1. Requisitos
+- Node.js 20+: https://nodejs.org/
+- PostgreSQL: https://www.postgresql.org/download/windows/
+
+### 2. Configurar
+- Abra o pgAdmin e crie o banco `planejamento_saas`
+- Edite `backend\.env` com a senha do PostgreSQL
+
+### 3. Iniciar
+- Clique duas vezes no `start.bat`
+
+### 4. Manter rodando como servico (PM2)
+```
+npm install -g pm2
+pm2 start backend/src/server.js --name planejamento-saas
+pm2-startup install
+pm2 save
+```
+
+### 5. Manter rodando com NSSM (alternativa)
+- Baixe NSSM: https://nssm.cc/download
+- Execute: `nssm install PlanejamentoSaaS "C:\Program Files\nodejs\node.exe" "C:\caminho\backend\src\server.js"`
+- O servico inicia automaticamente com o Windows
 
 ## Deploy na VPS (Ubuntu/Debian)
 

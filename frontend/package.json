@@ -1,0 +1,9 @@
+{
+  "name": "planejamento-saas-frontend",
+  "version": "1.0.0",
+  "description": "Frontend SaaS para Planejamento Semanal",
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "build": "cp -r public build"
+  }
+}

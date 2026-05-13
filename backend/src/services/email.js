@@ -2,19 +2,26 @@ const nodemailer = require('nodemailer');
 
 let transporter;
 
+function smtpConfigured() {
+  return process.env.SMTP_HOST
+    && process.env.SMTP_USER
+    && process.env.SMTP_PASS
+    && process.env.SMTP_USER !== 'your-email@gmail.com'
+    && process.env.SMTP_PASS !== 'your-app-password';
+}
+
 function getTransporter() {
   if (transporter) return transporter;
 
-  if (process.env.NODE_ENV === 'development' && !process.env.SMTP_HOST) {
-    // In dev without SMTP config, log emails to console
+  if (!smtpConfigured()) {
     transporter = {
       sendMail: async (opts) => {
-        console.log('\n=== EMAIL (dev mode) ===');
-        console.log('To:', opts.to);
-        console.log('Subject:', opts.subject);
-        console.log('Body:', opts.html || opts.text);
-        console.log('========================\n');
-        return { messageId: 'dev-' + Date.now() };
+        console.log('\n=== EMAIL (sem SMTP configurado) ===');
+        console.log('Para:', opts.to);
+        console.log('Assunto:', opts.subject);
+        console.log('Link:', opts.html.match(/href="([^"]+)"/)?.[1] || '');
+        console.log('====================================\n');
+        return { messageId: 'console-' + Date.now() };
       }
     };
   } else {
@@ -32,7 +39,8 @@ function getTransporter() {
 }
 
 async function sendActivationEmail(email, name, token) {
-  const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/ativar?token=${token}`;
+  const baseUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3001}`;
+  const url = `${baseUrl}/ativar?token=${token}`;
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:20px;border:1px solid #e0e0e0;border-radius:8px;">
       <h2 style="color:#2e7d32;">Planejamento Semanal</h2>

@@ -1659,12 +1659,12 @@ Responda APENAS em JSON.`;
 "${conteudo}"
 
 Se você conseguir identificar o conteúdo, responda com:
-{"compreendido": true, "codigos": ["EI03ET01", "EI03ET07"], "recursos": ["Material dourado", "Fichas numéricas de 0 a 20", "Lápis e papel"], "justificativa": "breve explicação"}
+{"compreendido": true, "codigos": ["EI03ET01", "EI03ET07"], "recursos": ["caderno", "lápis grafite e de cor", "folha de ofício", "cola"], "justificativa": "breve explicação"}
 
 Se o conteúdo estiver vazio, ilegível ou não fizer sentido pedagógico, responda com:
 {"compreendido": false, "codigos": [], "recursos": [], "justificativa": "motivo"}
 
-IMPORTANTE: Sugira recursos didáticos concretos e práticos para uso em sala de aula (ex: livros, materiais manipuláveis, cartazes, brinquedos pedagógicos, etc).`;
+IMPORTANTE: Sugira recursos didáticos SIMPLES e CURTOS, com no máximo 3 palavras cada. Exemplos corretos: "caderno", "lápis", "cola", "tesoura", "folha de ofício", "tinta guache", "bambolês", "giz de cera", "lápis grafite e de cor", "papel crepom". NÃO use descrições longas como "Fichas numéricas de 0 a 20" ou "Materiais para pintura e colagem" ou "Livros sobre o Dia das Mães". Seja direto e objetivo, apenas o nome do material.`;
   const raw = await _groqCall(sysPrompt, userPrompt, { temperature: 0.2, max_tokens: 600 });
   if (!raw) return null;
   if (raw._apiError) return raw;

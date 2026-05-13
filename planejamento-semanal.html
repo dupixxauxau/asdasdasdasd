@@ -538,8 +538,14 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
 }
 /* texto não compreendido pela IA = vermelho só na edição */
 .ia-nao-compreendido { color:#c04040 !important; }
-/* na impressão/PDF: tudo preto */
-@media print { .ia-nao-compreendido { color:var(--ink) !important; } .ia-panel { display:none !important; } }
+/* sublinhado vermelho em palavras com erro ortográfico */
+.spell-err {
+  text-decoration: underline wavy #d32f2f;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 2px;
+}
+/* na impressão/PDF: tudo preto, sem sublinhados de erro, sem painel IA */
+@media print { .ia-nao-compreendido { color:var(--ink) !important; } .ia-panel { display:none !important; } .spell-err { text-decoration:none !important; } }
 </style>
 </head>
 <body>
@@ -1310,6 +1316,11 @@ async function exportarPDF() {
   vermelhos.forEach(el => el.classList.remove('ia-nao-compreendido'));
   const _hadVermelhos = [...vermelhos];
 
+  // remover sublinhados de erro ortográfico
+  const spellErrs = document.querySelectorAll('.spell-err');
+  spellErrs.forEach(span => span.classList.remove('spell-err'));
+  const _hadSpellErrs = [...spellErrs];
+
   document.getElementById('loading').classList.add('show');
   await new Promise(r => setTimeout(r, 150));
 
@@ -1351,6 +1362,9 @@ async function exportarPDF() {
     // restaurar vermelho após PDF
     if (typeof _hadVermelhos !== 'undefined') {
       _hadVermelhos.forEach(el => el.classList.add('ia-nao-compreendido'));
+    }
+    if (typeof _hadSpellErrs !== 'undefined') {
+      _hadSpellErrs.forEach(el => el.classList.add('spell-err'));
     }
   }
 }
@@ -1766,11 +1780,13 @@ function abrirSpellPopup(e) {
 
 function aplicarCorrecao(novaPalavra) {
   if (!_spellTarget) return;
-  const { node, start, end } = _spellTarget;
+  const { node, start, end, editableEl } = _spellTarget;
   const text = node.textContent;
   node.textContent = text.slice(0, start) + novaPalavra + text.slice(end);
+  _spellCache.delete(text.slice(start, end).toLowerCase());
   fecharSpellPopup();
   showToast('✓ Corrigido!');
+  if (editableEl) agendarSpellCheck(editableEl);
 }
 
 function fecharSpellPopup() {
@@ -1795,6 +1811,132 @@ document.addEventListener('click', e => {
 // Fechar com Escape
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') fecharSpellPopup();
+});
+
+/* ══════════════════════════════
+   AUTO SPELL-CHECK (sublinhado vermelho)
+══════════════════════════════ */
+const _spellCache = new Map();
+let _spellTimers = new WeakMap();
+
+function limparSpellMarks(el) {
+  el.querySelectorAll('.spell-err').forEach(span => {
+    const parent = span.parentNode;
+    while (span.firstChild) parent.insertBefore(span.firstChild, span);
+    parent.removeChild(span);
+    parent.normalize();
+  });
+}
+
+async function verificarCampo(el) {
+  const rawText = el.textContent.trim();
+  if (rawText.length < 3) return;
+
+  const words = rawText.match(/[a-zA-ZÀ-ÿ]{3,}/g);
+  if (!words || !words.length) return;
+
+  const unique = [...new Set(words.map(w => w.toLowerCase()))].filter(w => {
+    if (_spellIgnored.has(w)) return false;
+    if (/^[A-Z]{2,}/.test(w)) return false;
+    return true;
+  });
+  if (!unique.length) return;
+
+  const toCheck = unique.filter(w => !_spellCache.has(w));
+
+  if (toCheck.length > 0) {
+    const raw = await _groqCall(
+      'Você é um corretor ortográfico de português brasileiro. Responda APENAS em JSON.',
+      `Verifique quais destas palavras estão ERRADAS em português brasileiro: ${JSON.stringify(toCheck)}
+Responda APENAS com JSON: {"erradas": ["palavra1","palavra2"]}
+Se TODAS estiverem corretas, responda: {"erradas": []}
+Considere nomes próprios, siglas e códigos BNCC como corretas.`,
+      { temperature: 0.1, max_tokens: 300 }
+    );
+    if (!raw || raw._apiError) return;
+    try {
+      const jsonMatch = raw.text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return;
+      const result = JSON.parse(jsonMatch[0]);
+      const erradas = new Set((result.erradas || []).map(w => w.toLowerCase()));
+      toCheck.forEach(w => _spellCache.set(w, erradas.has(w)));
+    } catch (e) { return; }
+  }
+
+  const erradas = unique.filter(w => _spellCache.get(w) === true);
+  if (!erradas.length) { limparSpellMarks(el); return; }
+
+  const savedSel = salvarCursor(el);
+  limparSpellMarks(el);
+
+  const re = new RegExp(`\\b(${erradas.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
+
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  nodes.forEach(node => {
+    const text = node.textContent;
+    if (!re.test(text)) return;
+    re.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0, match;
+    while ((match = re.exec(text)) !== null) {
+      if (match.index > last) frag.appendChild(document.createTextNode(text.slice(last, match.index)));
+      const span = document.createElement('span');
+      span.className = 'spell-err';
+      span.textContent = match[0];
+      frag.appendChild(span);
+      last = re.lastIndex;
+    }
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  restaurarCursor(el, savedSel);
+}
+
+function salvarCursor(el) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  const range = sel.getRangeAt(0);
+  if (!el.contains(range.startContainer)) return null;
+  const pre = document.createRange();
+  pre.setStart(el, 0);
+  pre.setEnd(range.startContainer, range.startOffset);
+  return pre.toString().length;
+}
+
+function restaurarCursor(el, offset) {
+  if (offset === null) return;
+  const sel = window.getSelection();
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let pos = 0;
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const len = node.textContent.length;
+    if (pos + len >= offset) {
+      const range = document.createRange();
+      range.setStart(node, offset - pos);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+    pos += len;
+  }
+}
+
+function agendarSpellCheck(el) {
+  if (_spellTimers.has(el)) clearTimeout(_spellTimers.get(el));
+  _spellTimers.set(el, setTimeout(() => verificarCampo(el), 1500));
+}
+
+document.addEventListener('input', e => {
+  const el = e.target.closest('[contenteditable="true"]');
+  if (!el) return;
+  if (!el.closest('#main-table')) return;
+  agendarSpellCheck(el);
 });
 
 /* ══════════════════════════════

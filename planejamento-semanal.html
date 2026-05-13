@@ -1384,10 +1384,10 @@ function toggleIAPanel() {
   icon.classList.toggle('open');
 }
 
-const _GEMINI_KEY = 'AIzaSyBYY6_vopEXWw_Y7dT0Re6hOJcYoeQz9Ik';
+const _GROQ_KEY = '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';
+const _GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 async function gerarSugestaoIA() {
-  const apiKey = _GEMINI_KEY;
   const faixa = document.getElementById('ia-faixa');
   const tipo = document.getElementById('ia-tipo');
   const tema = document.getElementById('ia-tema').value.trim();
@@ -1412,15 +1412,10 @@ async function gerarSugestaoIA() {
   resultDiv.innerHTML = '<span class="placeholder">Consultando IA, aguarde...</span>';
 
   try {
-    const raw = await _geminiCall({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ parts: [{ text: userPrompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
-    });
+    const raw = await _groqCall(systemPrompt, userPrompt, { temperature: 0.8, max_tokens: 2048 });
     if (!raw) throw new Error('Sem resposta da API.');
     if (raw._apiError) throw new Error(raw._apiError);
-    const text = raw.candidates?.[0]?.content?.parts?.[0]?.text || 'Nenhuma resposta gerada.';
-    resultDiv.textContent = text;
+    resultDiv.textContent = raw.text || 'Nenhuma resposta gerada.';
   } catch (err) {
     resultDiv.innerHTML = `<span style="color:#c04040;">❌ Erro: ${err.message}</span>`;
   } finally {
@@ -1560,6 +1555,38 @@ async function analisarBNCC_linha(tr) {
       badgeContainer.appendChild(badge);
     });
 
+    // preencher Recursos Didáticos automaticamente
+    if (resultado.recursos && resultado.recursos.length) {
+      const headers = document.querySelectorAll('#main-table thead th');
+      let recursosIdx = -1;
+      headers.forEach((th, i) => {
+        if (th.textContent.toLowerCase().includes('recurso')) recursosIdx = i;
+      });
+      if (recursosIdx >= 0 && tr.cells[recursosIdx]) {
+        const recursosCell = tr.cells[recursosIdx];
+        const ul = recursosCell.querySelector('.cell-list');
+        if (ul) {
+          const existentes = new Set(
+            [...ul.querySelectorAll('li [contenteditable]')]
+              .map(el => el.textContent.trim().toLowerCase())
+              .filter(t => t)
+          );
+          resultado.recursos.forEach(recurso => {
+            if (existentes.has(recurso.toLowerCase())) return;
+            const firstEmpty = ul.querySelector('li [contenteditable]');
+            if (firstEmpty && !firstEmpty.textContent.trim()) {
+              firstEmpty.textContent = recurso;
+            } else {
+              const li = document.createElement('li');
+              li.innerHTML = `<span contenteditable="true" spellcheck="true">${recurso}</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+              ul.appendChild(li);
+            }
+            existentes.add(recurso.toLowerCase());
+          });
+        }
+      }
+    }
+
   } catch (e) {
     marcarNaoCompreendido(tr, true);
   }
@@ -1578,58 +1605,58 @@ function marcarNaoCompreendido(tr, ativar) {
   }
 }
 
-const _GEMINI_MODELS = ['gemini-2.0-flash-lite', 'gemini-2.0-flash'];
-let _currentModelIdx = 0;
-
-async function _geminiCall(body) {
-  const apiKey = _GEMINI_KEY;
-  if (!apiKey) return null;
-  for (let attempt = 0; attempt < _GEMINI_MODELS.length; attempt++) {
-    const modelIdx = (_currentModelIdx + attempt) % _GEMINI_MODELS.length;
-    const model = _GEMINI_MODELS[modelIdx];
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (response.status === 429) continue;
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        return { _apiError: errData?.error?.message?.substring(0, 80) || ('Erro ' + response.status) };
-      }
-      _currentModelIdx = modelIdx;
-      return await response.json();
-    } catch (e) { continue; }
+async function _groqCall(systemPrompt, userPrompt, opts = {}) {
+  if (!_GROQ_KEY) return null;
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_GROQ_KEY}` },
+      body: JSON.stringify({
+        model: _GROQ_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: opts.temperature || 0.2,
+        max_tokens: opts.max_tokens || 1024
+      })
+    });
+    if (response.status === 429) return { _apiError: 'Limite de requisições atingido. Aguarde um momento.' };
+    if (!response.ok) {
+      const errData = await response.json().catch(() => null);
+      return { _apiError: errData?.error?.message?.substring(0, 80) || ('Erro ' + response.status) };
+    }
+    const data = await response.json();
+    return { text: data.choices?.[0]?.message?.content || '' };
+  } catch (e) {
+    return { _apiError: 'Falha na conexão com a API.' };
   }
-  return { _apiError: 'Cota da API esgotada em todos os modelos. Aguarde ou use outra chave.' };
 }
 
 async function consultarBNCC(conteudo) {
-  const raw = await _geminiCall({
-    system_instruction: { parts: [{ text: `Você é uma pedagoga especialista em Educação Infantil e BNCC. Analise o conteúdo das atividades e identifique os códigos BNCC (Objetivos de Aprendizagem e Desenvolvimento) da Educação Infantil que correspondem.
+  const sysPrompt = `Você é uma pedagoga especialista em Educação Infantil e BNCC. Analise o conteúdo das atividades e identifique os códigos BNCC (Objetivos de Aprendizagem e Desenvolvimento) da Educação Infantil que correspondem. Também sugira recursos didáticos necessários para a atividade.
 Os códigos BNCC da Educação Infantil seguem o padrão: EIxxYYzz onde:
 - EI = Educação Infantil
 - xx = faixa etária (01=bebês, 02=crianças bem pequenas, 03=crianças pequenas)
 - YY = campo de experiência (EO=Eu/Outro/Nós, CG=Corpo/Gestos/Movimentos, TS=Traços/Sons/Cores, EF=Escuta/Fala/Pensamento, ET=Espaço/Tempo/Quantidades)
 - zz = número sequencial
-Responda APENAS em JSON.` }] },
-    contents: [{ parts: [{ text: `Analise este conteúdo de atividade de Educação Infantil e identifique os códigos BNCC correspondentes:
+Responda APENAS em JSON.`;
+  const userPrompt = `Analise este conteúdo de atividade de Educação Infantil e identifique os códigos BNCC correspondentes e sugira recursos didáticos necessários:
 
 "${conteudo}"
 
 Se você conseguir identificar o conteúdo, responda com:
-{"compreendido": true, "codigos": ["EI01CG01", "EI02EF01"], "justificativa": "breve explicação"}
+{"compreendido": true, "codigos": ["EI03ET01", "EI03ET07"], "recursos": ["Material dourado", "Fichas numéricas de 0 a 20", "Lápis e papel"], "justificativa": "breve explicação"}
 
 Se o conteúdo estiver vazio, ilegível ou não fizer sentido pedagógico, responda com:
-{"compreendido": false, "codigos": [], "justificativa": "motivo"}` }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
-  });
+{"compreendido": false, "codigos": [], "recursos": [], "justificativa": "motivo"}
+
+IMPORTANTE: Sugira recursos didáticos concretos e práticos para uso em sala de aula (ex: livros, materiais manipuláveis, cartazes, brinquedos pedagógicos, etc).`;
+  const raw = await _groqCall(sysPrompt, userPrompt, { temperature: 0.2, max_tokens: 600 });
   if (!raw) return null;
   if (raw._apiError) return raw;
   try {
-    const text = raw.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = raw.text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     const result = JSON.parse(jsonMatch[0]);
     if (!result.compreendido) return null;
@@ -1672,18 +1699,17 @@ function getWordAtClick(e) {
 }
 
 async function verificarOrtografia(word) {
-  const raw = await _geminiCall({
-    system_instruction: { parts: [{ text: 'Você é um corretor ortográfico de português brasileiro. Responda APENAS em JSON.' }] },
-    contents: [{ parts: [{ text: `Verifique se a palavra "${word}" está correta em português brasileiro. 
+  const raw = await _groqCall(
+    'Você é um corretor ortográfico de português brasileiro. Responda APENAS em JSON.',
+    `Verifique se a palavra "${word}" está correta em português brasileiro. 
 Responda APENAS com JSON no formato: {"correto": true} ou {"correto": false, "sugestoes": ["palavra1","palavra2","palavra3"]}
 Se a palavra for um nome próprio, sigla, abreviação ou código, considere correta.
-Dê no máximo 5 sugestões ordenadas por probabilidade.` }] }],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 200 }
-  });
+Dê no máximo 5 sugestões ordenadas por probabilidade.`,
+    { temperature: 0.1, max_tokens: 200 }
+  );
   if (!raw || raw._apiError) return null;
   try {
-    const text = raw.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = raw.text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     return JSON.parse(jsonMatch[0]);
   } catch (e) { return null; }

@@ -1942,16 +1942,60 @@ document.addEventListener('input', e => {
 /* ══════════════════════════════
    INIT
 ══════════════════════════════ */
+/* ═══════════════════════
+   AUTO-SAVE / AUTO-LOAD
+═══════════════════════ */
+const SAVE_KEY = 'planejamento-semanal-data';
+let _saveTimeout;
+
+function autoSave() {
+  clearTimeout(_saveTimeout);
+  _saveTimeout = setTimeout(() => {
+    try {
+      const tableEl = document.querySelector('.table-wrapper');
+      const headerEl = document.querySelector('.doc-header');
+      if (tableEl && headerEl) {
+        const data = {
+          header: headerEl.innerHTML,
+          table: tableEl.innerHTML,
+          savedAt: new Date().toISOString()
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      }
+    } catch(e) {}
+  }, 2000);
+}
+
+function autoLoad() {
+  try {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    const tableEl = document.querySelector('.table-wrapper');
+    const headerEl = document.querySelector('.doc-header');
+    if (data.table && tableEl) tableEl.innerHTML = data.table;
+    if (data.header && headerEl) headerEl.innerHTML = data.header;
+  } catch(e) {}
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.closest('[contenteditable]') || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+    autoSave();
+  }
+});
+
 window.addEventListener('DOMContentLoaded', () => {
   renderHeader();
   initDateInput();
   aplicarSemana();
   carregarFonte();
+  autoLoad();
 });
 
 // Quando muda a data, reconstrói os toggles
 document.addEventListener('change', e => {
   if (e.target.id === 'startDate') construirToggles();
+  autoSave();
 });
 </script>
 </body>

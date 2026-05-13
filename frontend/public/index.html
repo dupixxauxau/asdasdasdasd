@@ -109,7 +109,7 @@ body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); 
 }
 .license-active { background:#e8f5e9; color:var(--primary); }
 .license-trial { background:#fff3e0; color:#e65100; }
-.license-expired { background:#ffebee; color:var(--danger); }
+.license-expired { background:#ffebee; color:#c62828; }
 .license-none { background:#f5f5f5; color:var(--text-light); }
 
 /* Plans */
@@ -491,6 +491,8 @@ function logout() {
 /* ═══════════════════════
    DASHBOARD
 ═══════════════════════ */
+let _trialUsed = false;
+
 async function enterDashboard() {
   if (!_user) return showPage('login');
 
@@ -498,6 +500,7 @@ async function enterDashboard() {
     const me = await api('/auth/me');
     _user = me.user;
     _license = me.license;
+    _trialUsed = me.trial_used || false;
   } catch (err) {
     return logout();
   }
@@ -525,29 +528,45 @@ async function loadClientDashboard() {
   if (_license) {
     const exp = new Date(_license.expires_at);
     const remaining = exp - new Date();
-    const statusClass = _license.status === 'trial' ? 'license-trial' : 'license-active';
-    const statusLabel = _license.status === 'trial' ? 'Trial' : _license.plan_type;
 
-    infoEl.innerHTML = `
-      <span class="license-status ${statusClass}">${statusLabel}</span>
-      <p style="margin-top:12px;font-size:14px;color:var(--text-light);">
-        Expira em: <strong>${exp.toLocaleDateString('pt-BR')}</strong>
-        ${_license.status === 'trial' ? ' ('+Math.max(0,Math.ceil(remaining/60000))+' min restantes)' : ''}
-      </p>
-    `;
-    appCard.style.display = 'block';
+    if (remaining <= 0) {
+      // License expired — block access
+      _license = null;
+      infoEl.innerHTML = `
+        <span class="license-status license-expired">Licenca Expirada</span>
+        <p style="margin-top:12px;font-size:14px;color:var(--text-light);">Sua licenca expirou. Adquira um plano para continuar usando o Planejamento Semanal.</p>
+        <p style="font-size:13px;color:var(--text-light);margin-top:8px;">Seu trabalho foi salvo automaticamente e estara disponivel quando reativar.</p>
+      `;
+      appCard.style.display = 'none';
+      trialTimer.style.display = 'none';
+    } else {
+      const statusClass = _license.status === 'trial' ? 'license-trial' : 'license-active';
+      const statusLabel = _license.status === 'trial' ? 'Trial' : _license.plan_type;
+      const daysLeft = Math.ceil(remaining / (1000 * 60 * 60 * 24));
+      const hoursLeft = Math.ceil(remaining / (1000 * 60 * 60));
+      const timeText = _license.status === 'trial'
+        ? Math.max(0, Math.ceil(remaining / 60000)) + ' min restantes'
+        : daysLeft + ' dias restantes';
 
-    if (_license.status === 'trial') {
+      infoEl.innerHTML = `
+        <span class="license-status ${statusClass}">${statusLabel}</span>
+        <p style="margin-top:12px;font-size:14px;color:var(--text-light);">
+          Expira em: <strong>${exp.toLocaleDateString('pt-BR')}</strong> (${timeText})
+        </p>
+      `;
+      appCard.style.display = 'block';
+
+      // Start timer for ALL license types (not just trial)
       trialTimer.style.display = 'block';
-      startTrialTimer(exp);
+      startLicenseTimer(exp);
     }
   } else {
-    infoEl.innerHTML = `
-      <span class="license-status license-none">Sem licenca ativa</span>
-      <p style="margin-top:12px;font-size:14px;color:var(--text-light);">Inicie o trial gratuito ou adquira um plano.</p>
-      <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="startTrialBtn()">Iniciar Trial Gratuito (2 horas)</button>
-    `;
+    const trialMsg = _trialUsed
+      ? '<span class="license-status license-expired">Trial ja utilizado</span><p style="margin-top:12px;font-size:14px;color:var(--text-light);">Adquira um plano para acessar o Planejamento Semanal.</p>'
+      : '<span class="license-status license-none">Sem licenca ativa</span><p style="margin-top:12px;font-size:14px;color:var(--text-light);">Inicie o trial gratuito ou adquira um plano.</p><button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="startTrialBtn()">Iniciar Trial Gratuito (2 horas)</button>';
+    infoEl.innerHTML = trialMsg;
     appCard.style.display = 'none';
+    trialTimer.style.display = 'none';
   }
 
   // Plans
@@ -576,7 +595,7 @@ async function startTrialBtn() {
   }
 }
 
-function startTrialTimer(expDate) {
+function startLicenseTimer(expDate) {
   if (_timerInterval) clearInterval(_timerInterval);
   const display = document.getElementById('timer-display');
   _timerInterval = setInterval(() => {
@@ -584,15 +603,21 @@ function startTrialTimer(expDate) {
     if (diff <= 0) {
       clearInterval(_timerInterval);
       display.textContent = '00:00:00';
-      toast('Trial expirado!', 'error');
+      toast('Sua licenca expirou! Adquira um plano para continuar.', 'error');
       _license = null;
+      _trialUsed = true;
       loadClientDashboard();
       return;
     }
-    const h = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
-    display.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (days > 0) {
+      display.textContent = `${days}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    } else {
+      display.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
   }, 1000);
 }
 

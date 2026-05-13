@@ -120,8 +120,13 @@ router.get('/activate', async (req, res) => {
 // GET /api/auth/me
 router.get('/me', authRequired, async (req, res) => {
   const license = await getUserActiveLicense(req.user.id);
+  const trialCheck = await pool.query(
+    "SELECT id FROM licenses WHERE user_id = $1 AND trial_used = true",
+    [req.user.id]
+  );
   res.json({
     user: req.user,
+    trial_used: trialCheck.rows.length > 0,
     license: license ? {
       id: license.id,
       plan_type: license.plan_type,

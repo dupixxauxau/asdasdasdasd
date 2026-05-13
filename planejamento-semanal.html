@@ -24,13 +24,15 @@
   --font-scale: 1;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  font-size: calc(16px * var(--font-scale));
+}
 body {
   font-family: 'DM Sans', sans-serif;
   background: #e6f0e8;
   min-height: 100vh;
   padding: 28px 16px 60px;
   color: var(--ink);
-  font-size: calc(16px * var(--font-scale));
 }
 
 /* ── TOOLBAR ── */

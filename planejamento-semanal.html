@@ -416,11 +416,6 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
 .font-control .font-val { font-size:0.75rem; color:var(--green-mid); min-width:32px; text-align:center; }
 
 /* ── CAMPOS EXPERIÊNCIA TOPO ── */
-.campos-top-note {
-  font-size:0.7rem; color:var(--green-mid); font-style:italic;
-  margin-top:4px; opacity:0.85;
-}
-
 /* ── PAINEL IA PEDAGOGIA ── */
 .ia-panel {
   max-width:980px; margin:10px auto;
@@ -626,14 +621,13 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
       </div>
     </div>
     <div class="info-block">
-      <div class="section-title">Campos de Experiências <span style="font-size:0.65rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--green-mid);">(aplica-se a todos os dias)</span></div>
+      <div class="section-title">Campos de Experiências</div>
       <ul class="campos-list" id="campos-list">
         <li><span contenteditable="true" spellcheck="true">Traços, Sons, Cores e Formas</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
         <li><span contenteditable="true" spellcheck="true">Espaço, Tempo, Quantidades, Relações e Transformações</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
         <li><span contenteditable="true" spellcheck="true">Corpo, Gestos e Movimentos</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
         <li><span contenteditable="true" spellcheck="true">Escuta, Fala, Pensamento e Imaginação</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
       </ul>
-      <p class="campos-top-note">Os campos "O Eu, o Outro e o Nós" foram removidos dos dias — ficam apenas aqui no topo, aplicando-se a toda a semana.</p>
       <button class="add-inline" style="margin-top:8px" onclick="addCampo()">+ campo</button>
     </div>
   </div>

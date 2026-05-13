@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejamento Semanal — Educação Infantil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #2e7d32;
+  --primary-dark: #1b5e20;
+  --primary-light: #4caf50;
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --text: #333;
+  --text-light: #666;
+  --border: #e0e0e0;
+  --danger: #d32f2f;
+  --warning: #f9a825;
+  --info: #1976d2;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* ===== PAGES ===== */
+.page { display:none; min-height:100vh; }
+.page.active { display:flex; }
+
+/* ===== AUTH PAGES ===== */
+.auth-page {
+  align-items:center; justify-content:center;
+  background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #4caf50 100%);
+}
+.auth-card {
+  background:var(--card); border-radius:16px; padding:40px;
+  width:100%; max-width:420px; box-shadow:0 8px 32px rgba(0,0,0,0.15);
+}
+.auth-card h1 { color:var(--primary); font-size:24px; margin-bottom:6px; }
+.auth-card .subtitle { color:var(--text-light); font-size:14px; margin-bottom:28px; }
+.auth-card .logo { font-size:40px; margin-bottom:16px; display:block; }
+
+.form-group { margin-bottom:18px; }
+.form-group label { display:block; font-weight:500; font-size:13px; margin-bottom:6px; color:var(--text); }
+.form-group input {
+  width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:8px;
+  font-size:15px; font-family:inherit; transition:border 0.2s;
+}
+.form-group input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(46,125,50,0.1); }
+
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:12px 24px; border:none; border-radius:8px; font-size:15px; font-weight:600;
+  font-family:inherit; cursor:pointer; transition:all 0.2s; width:100%;
+}
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:var(--primary-dark); }
+.btn-outline { background:transparent; border:1.5px solid var(--primary); color:var(--primary); }
+.btn-outline:hover { background:var(--primary); color:#fff; }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-danger:hover { background:#b71c1c; }
+.btn-sm { padding:8px 16px; font-size:13px; width:auto; }
+.btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+.auth-link { text-align:center; margin-top:16px; font-size:14px; color:var(--text-light); }
+.auth-link a { color:var(--primary); text-decoration:none; font-weight:500; }
+.auth-link a:hover { text-decoration:underline; }
+
+.alert { padding:12px 16px; border-radius:8px; font-size:14px; margin-bottom:16px; }
+.alert-error { background:#ffebee; color:var(--danger); border:1px solid #ffcdd2; }
+.alert-success { background:#e8f5e9; color:var(--primary-dark); border:1px solid #c8e6c9; }
+.alert-info { background:#e3f2fd; color:var(--info); border:1px solid #bbdefb; }
+
+/* ===== DASHBOARD LAYOUT ===== */
+.dashboard-page { flex-direction:column; }
+
+.topbar {
+  background:var(--primary); color:#fff; padding:0 24px; height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+.topbar h2 { font-size:18px; font-weight:600; }
+.topbar-right { display:flex; align-items:center; gap:16px; }
+.topbar-right span { font-size:14px; opacity:0.9; }
+.topbar-right button { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:8px 16px; border-radius:6px; font-size:13px; font-family:inherit; cursor:pointer; }
+.topbar-right button:hover { background:rgba(255,255,255,0.25); }
+
+.dashboard-content { flex:1; padding:24px; max-width:1100px; margin:0 auto; width:100%; }
+
+/* Cards */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
+.stat-card {
+  background:var(--card); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow);
+}
+.stat-card .label { font-size:13px; color:var(--text-light); font-weight:500; }
+.stat-card .value { font-size:28px; font-weight:700; color:var(--primary); margin-top:4px; }
+.stat-card .sub { font-size:12px; color:var(--text-light); margin-top:4px; }
+
+.card { background:var(--card); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); margin-bottom:24px; }
+.card h3 { font-size:18px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+
+/* License card */
+.license-status {
+  display:inline-flex; align-items:center; gap:6px; padding:4px 12px;
+  border-radius:20px; font-size:13px; font-weight:600;
+}
+.license-active { background:#e8f5e9; color:var(--primary); }
+.license-trial { background:#fff3e0; color:#e65100; }
+.license-expired { background:#ffebee; color:#c62828; }
+.license-none { background:#f5f5f5; color:var(--text-light); }
+
+/* Plans */
+.plans-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px; }
+.plan-card {
+  border:2px solid var(--border); border-radius:var(--radius); padding:24px; text-align:center;
+  transition:border 0.2s;
+}
+.plan-card:hover { border-color:var(--primary); }
+.plan-card h4 { font-size:18px; margin-bottom:8px; }
+.plan-card .price { font-size:32px; font-weight:700; color:var(--primary); }
+.plan-card .price span { font-size:14px; font-weight:400; color:var(--text-light); }
+.plan-card .duration { font-size:14px; color:var(--text-light); margin:8px 0 16px; }
+
+/* Table */
+.data-table { width:100%; border-collapse:collapse; font-size:14px; }
+.data-table th { text-align:left; padding:12px; background:#f5f7fa; font-weight:600; border-bottom:2px solid var(--border); }
+.data-table td { padding:10px 12px; border-bottom:1px solid #f0f0f0; }
+.data-table tr:hover td { background:#fafafa; }
+
+.badge {
+  display:inline-block; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600;
+}
+.badge-green { background:#e8f5e9; color:var(--primary); }
+.badge-red { background:#ffebee; color:var(--danger); }
+.badge-orange { background:#fff3e0; color:#e65100; }
+.badge-blue { background:#e3f2fd; color:var(--info); }
+.badge-gray { background:#f5f5f5; color:var(--text-light); }
+
+/* Tabs */
+.tabs { display:flex; gap:4px; margin-bottom:20px; border-bottom:2px solid var(--border); padding-bottom:0; }
+.tab-btn {
+  padding:10px 20px; border:none; background:transparent; font-size:14px; font-weight:500;
+  font-family:inherit; cursor:pointer; color:var(--text-light); border-bottom:2px solid transparent;
+  margin-bottom:-2px; transition:all 0.2s;
+}
+.tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* Search */
+.search-bar {
+  display:flex; gap:8px; margin-bottom:16px;
+}
+.search-bar input { flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; }
+.search-bar input:focus { outline:none; border-color:var(--primary); }
+
+/* Modal */
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+  z-index:1000; align-items:center; justify-content:center;
+}
+.modal-overlay.active { display:flex; }
+.modal {
+  background:var(--card); border-radius:16px; padding:32px;
+  width:100%; max-width:450px; box-shadow:0 16px 48px rgba(0,0,0,0.2);
+}
+.modal h3 { margin-bottom:16px; }
+.modal .form-group:last-of-type { margin-bottom:24px; }
+
+/* Timer */
+.timer { font-size:20px; font-weight:700; color:var(--primary); font-variant-numeric:tabular-nums; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .auth-card { margin:16px; padding:28px; }
+  .dashboard-content { padding:16px; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .plans-grid { grid-template-columns:1fr; }
+}
+
+/* Loading spinner */
+.spinner { display:inline-block; width:20px; height:20px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Toast */
+.toast-container { position:fixed; top:20px; right:20px; z-index:9999; }
+.toast {
+  background:var(--card); border-radius:8px; padding:14px 20px; margin-bottom:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.15); font-size:14px; display:flex; align-items:center; gap:8px;
+  animation:slideIn 0.3s ease;
+}
+@keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+.toast-success { border-left:4px solid var(--primary); }
+.toast-error { border-left:4px solid var(--danger); }
+</style>
+</head>
+<body>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ===== LOGIN PAGE ===== -->
+<div class="page auth-page active" id="page-login">
+  <div class="auth-card">
+    <span class="logo">📋</span>
+    <h1>Planejamento Semanal</h1>
+    <p class="subtitle">Educacao Infantil — Acesse sua conta</p>
+    <div id="login-alert"></div>
+    <form id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-password" placeholder="Sua senha" required>
+      </div>
+      <button type="submit" class="btn btn-primary" id="login-btn">Entrar</button>
+    </form>
+    <p class="auth-link">Nao tem conta? <a href="#" onclick="showPage('register')">Cadastre-se</a></p>
+  </div>
+</div>
+
+<!-- ===== REGISTER PAGE ===== -->
+<div class="page auth-page" id="page-register">
+  <div class="auth-card">
+    <span class="logo">📋</span>
+    <h1>Criar Conta</h1>
+    <p class="subtitle">Cadastre-se para acessar o Planejamento Semanal</p>
+    <div id="register-alert"></div>
+    <form id="register-form">
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input type="text" id="register-name" placeholder="Seu nome" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="register-email" placeholder="seu@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>Senha (min. 6 caracteres)</label>
+        <input type="password" id="register-password" placeholder="Crie uma senha" required minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary" id="register-btn">Cadastrar</button>
+    </form>
+    <p class="auth-link">Ja tem conta? <a href="#" onclick="showPage('login')">Entrar</a></p>
+  </div>
+</div>
+
+<!-- ===== ACTIVATION PAGE ===== -->
+<div class="page auth-page" id="page-activate">
+  <div class="auth-card" style="text-align:center;">
+    <span class="logo">✉️</span>
+    <h1 id="activate-title">Ativando conta...</h1>
+    <p class="subtitle" id="activate-msg">Aguarde enquanto verificamos seu email.</p>
+    <div id="activate-alert" style="margin-top:16px;"></div>
+    <a href="#" onclick="showPage('login')" class="btn btn-outline" style="margin-top:20px;">Ir para Login</a>
+  </div>
+</div>
+
+<!-- ===== CLIENT DASHBOARD ===== -->
+<div class="page dashboard-page" id="page-client">
+  <div class="topbar">
+    <h2>📋 Planejamento Semanal</h2>
+    <div class="topbar-right">
+      <span id="client-name"></span>
+      <button onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="dashboard-content">
+    <!-- License status card -->
+    <div class="card" id="license-card">
+      <h3>📄 Sua Licenca</h3>
+      <div id="license-info"></div>
+    </div>
+
+    <!-- App access -->
+    <div class="card" id="app-card" style="display:none;">
+      <h3>🎯 Acessar Planejamento</h3>
+      <p style="margin-bottom:16px;color:var(--text-light);">Clique para abrir o editor de Planejamento Semanal.</p>
+      <button class="btn btn-primary" style="max-width:300px;" onclick="openApp()">Abrir Planejamento Semanal</button>
+      <div id="trial-timer" style="margin-top:16px;display:none;">
+        <p style="font-size:13px;color:var(--text-light);">Tempo restante do trial:</p>
+        <span class="timer" id="timer-display">02:00:00</span>
+      </div>
+    </div>
+
+    <!-- Plans -->
+    <div class="card" id="plans-card">
+      <h3>💳 Planos Disponiveis</h3>
+      <div class="plans-grid" id="plans-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<div class="page dashboard-page" id="page-admin">
+  <div class="topbar">
+    <h2>📋 Admin — Planejamento Semanal</h2>
+    <div class="topbar-right">
+      <span id="admin-name"></span>
+      <button onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="dashboard-content">
+    <!-- Stats -->
+    <div class="stats-grid" id="admin-stats"></div>
+
+    <!-- Tabs -->
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-users', this)">Usuarios</button>
+        <button class="tab-btn" onclick="switchTab('tab-payments', this)">Pagamentos</button>
+        <button class="tab-btn" onclick="switchTab('tab-logs', this)">Logs</button>
+      </div>
+
+      <!-- Users tab -->
+      <div class="tab-content active" id="tab-users">
+        <div class="search-bar">
+          <input type="text" id="admin-search" placeholder="Buscar por nome ou email..." oninput="searchUsers()">
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="users-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Licenca</th>
+                <th>Acoes</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+        <div id="users-pagination" style="margin-top:16px;text-align:center;"></div>
+      </div>
+
+      <!-- Payments tab -->
+      <div class="tab-content" id="tab-payments">
+        <table class="data-table">
+          <thead>
+            <tr><th>Data</th><th>Usuario</th><th>Valor</th><th>Gateway</th><th>Status</th></tr>
+          </thead>
+          <tbody id="payments-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Logs tab -->
+      <div class="tab-content" id="tab-logs">
+        <table class="data-table">
+          <thead>
+            <tr><th>Data</th><th>Admin</th><th>Acao</th><th>Usuario Alvo</th></tr>
+          </thead>
+          <tbody id="logs-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Create License ===== -->
+<div class="modal-overlay" id="modal-license">
+  <div class="modal">
+    <h3>Criar Licenca Manual</h3>
+    <div class="form-group">
+      <label>Plano</label>
+      <select id="modal-plan" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;"></select>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" onclick="confirmCreateLicense()">Criar</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-license')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════
+   CONFIG
+═══════════════════════ */
+const API = '/api';
+
+let _token = localStorage.getItem('token');
+let _user = JSON.parse(localStorage.getItem('user') || 'null');
+let _license = null;
+let _timerInterval = null;
+let _selectedUserId = null;
+
+/* ═══════════════════════
+   API HELPERS
+═══════════════════════ */
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (_token) headers['Authorization'] = `Bearer ${_token}`;
+  try {
+    const res = await fetch(`${API}${path}`, { ...opts, headers });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
+    return data;
+  } catch (err) {
+    if (err.message.includes('Token') || err.message.includes('401')) { logout(); }
+    throw err;
+  }
+}
+
+/* ═══════════════════════
+   TOAST
+═══════════════════════ */
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+/* ═══════════════════════
+   NAVIGATION
+═══════════════════════ */
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById(`page-${name}`);
+  if (page) page.classList.add('active');
+}
+
+/* ═══════════════════════
+   AUTH
+═══════════════════════ */
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Entrando...';
+  const alertEl = document.getElementById('login-alert');
+  alertEl.innerHTML = '';
+  try {
+    const data = await api('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value,
+      }),
+    });
+    _token = data.token;
+    _user = data.user;
+    _license = data.license;
+    localStorage.setItem('token', _token);
+    localStorage.setItem('user', JSON.stringify(_user));
+    enterDashboard();
+  } catch (err) {
+    alertEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+});
+
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('register-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Cadastrando...';
+  const alertEl = document.getElementById('register-alert');
+  alertEl.innerHTML = '';
+  try {
+    const data = await api('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('register-name').value,
+        email: document.getElementById('register-email').value,
+        password: document.getElementById('register-password').value,
+      }),
+    });
+    alertEl.innerHTML = `<div class="alert alert-success">${data.message}</div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="showPage('login')">Fazer Login</button>`;
+    document.getElementById('register-form').reset();
+  } catch (err) {
+    alertEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Cadastrar';
+  }
+});
+
+function logout() {
+  _token = null; _user = null; _license = null;
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  if (_timerInterval) clearInterval(_timerInterval);
+  showPage('login');
+}
+
+/* ═══════════════════════
+   DASHBOARD
+═══════════════════════ */
+let _trialUsed = false;
+
+async function enterDashboard() {
+  if (!_user) return showPage('login');
+
+  try {
+    const me = await api('/auth/me');
+    _user = me.user;
+    _license = me.license;
+    _trialUsed = me.trial_used || false;
+  } catch (err) {
+    return logout();
+  }
+
+  if (_user.role === 'admin') {
+    document.getElementById('admin-name').textContent = _user.name;
+    showPage('admin');
+    loadAdminData();
+  } else {
+    document.getElementById('client-name').textContent = _user.name;
+    showPage('client');
+    loadClientDashboard();
+  }
+}
+
+/* ═══════════════════════
+   CLIENT DASHBOARD
+═══════════════════════ */
+async function loadClientDashboard() {
+  // License info
+  const infoEl = document.getElementById('license-info');
+  const appCard = document.getElementById('app-card');
+  const trialTimer = document.getElementById('trial-timer');
+
+  if (_license) {
+    const exp = new Date(_license.expires_at);
+    const remaining = exp - new Date();
+
+    if (remaining <= 0) {
+      // License expired — block access
+      _license = null;
+      infoEl.innerHTML = `
+        <span class="license-status license-expired">Licenca Expirada</span>
+        <p style="margin-top:12px;font-size:14px;color:var(--text-light);">Sua licenca expirou. Adquira um plano para continuar usando o Planejamento Semanal.</p>
+        <p style="font-size:13px;color:var(--text-light);margin-top:8px;">Seu trabalho foi salvo automaticamente e estara disponivel quando reativar.</p>
+      `;
+      appCard.style.display = 'none';
+      trialTimer.style.display = 'none';
+    } else {
+      const statusClass = _license.status === 'trial' ? 'license-trial' : 'license-active';
+      const statusLabel = _license.status === 'trial' ? 'Trial' : _license.plan_type;
+      const daysLeft = Math.ceil(remaining / (1000 * 60 * 60 * 24));
+      const hoursLeft = Math.ceil(remaining / (1000 * 60 * 60));
+      const timeText = _license.status === 'trial'
+        ? Math.max(0, Math.ceil(remaining / 60000)) + ' min restantes'
+        : daysLeft + ' dias restantes';
+
+      infoEl.innerHTML = `
+        <span class="license-status ${statusClass}">${statusLabel}</span>
+        <p style="margin-top:12px;font-size:14px;color:var(--text-light);">
+          Expira em: <strong>${exp.toLocaleDateString('pt-BR')}</strong> (${timeText})
+        </p>
+      `;
+      appCard.style.display = 'block';
+
+      // Start timer for ALL license types (not just trial)
+      trialTimer.style.display = 'block';
+      startLicenseTimer(exp);
+    }
+  } else {
+    const trialMsg = _trialUsed
+      ? '<span class="license-status license-expired">Trial ja utilizado</span><p style="margin-top:12px;font-size:14px;color:var(--text-light);">Adquira um plano para acessar o Planejamento Semanal.</p>'
+      : '<span class="license-status license-none">Sem licenca ativa</span><p style="margin-top:12px;font-size:14px;color:var(--text-light);">Inicie o trial gratuito ou adquira um plano.</p><button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="startTrialBtn()">Iniciar Trial Gratuito (2 horas)</button>';
+    infoEl.innerHTML = trialMsg;
+    appCard.style.display = 'none';
+    trialTimer.style.display = 'none';
+  }
+
+  // Plans
+  try {
+    const plans = await api('/plans');
+    const grid = document.getElementById('plans-grid');
+    grid.innerHTML = plans.map(p => `
+      <div class="plan-card">
+        <h4>${p.name}</h4>
+        <div class="price">R$ ${parseFloat(p.price).toFixed(2).replace('.',',')} <span>/${p.name.toLowerCase()}</span></div>
+        <div class="duration">${p.duration_days} dias de acesso</div>
+        <button class="btn btn-primary btn-sm" onclick="buyPlan(${p.id})">Assinar</button>
+      </div>
+    `).join('');
+  } catch (err) {}
+}
+
+async function startTrialBtn() {
+  try {
+    const data = await api('/license/trial', { method: 'POST' });
+    toast(data.message);
+    _license = data.license;
+    loadClientDashboard();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function startLicenseTimer(expDate) {
+  if (_timerInterval) clearInterval(_timerInterval);
+  const display = document.getElementById('timer-display');
+  _timerInterval = setInterval(() => {
+    const diff = expDate - new Date();
+    if (diff <= 0) {
+      clearInterval(_timerInterval);
+      display.textContent = '00:00:00';
+      toast('Sua licenca expirou! Adquira um plano para continuar.', 'error');
+      _license = null;
+      _trialUsed = true;
+      loadClientDashboard();
+      return;
+    }
+    const days = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (days > 0) {
+      display.textContent = `${days}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    } else {
+      display.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+  }, 1000);
+}
+
+async function buyPlan(planId) {
+  try {
+    const data = await api('/payment/create', {
+      method: 'POST',
+      body: JSON.stringify({ plan_id: planId }),
+    });
+    if (data.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else if (data.dev_mode) {
+      toast(data.message);
+      _license = data.license;
+      loadClientDashboard();
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function openApp() {
+  window.open('/planejamento-semanal.html', '_blank');
+}
+
+/* ═══════════════════════
+   ADMIN DASHBOARD
+═══════════════════════ */
+async function loadAdminData() {
+  // Stats
+  try {
+    const stats = await api('/admin/stats');
+    document.getElementById('admin-stats').innerHTML = `
+      <div class="stat-card"><div class="label">Total Usuarios</div><div class="value">${stats.total_users}</div></div>
+      <div class="stat-card"><div class="label">Licencas Ativas</div><div class="value">${stats.active_licenses}</div></div>
+      <div class="stat-card"><div class="label">Receita Total</div><div class="value">R$ ${stats.total_revenue.toFixed(2).replace('.',',')}</div></div>
+      <div class="stat-card"><div class="label">Receita Mensal</div><div class="value">R$ ${stats.monthly_revenue.toFixed(2).replace('.',',')}</div></div>
+    `;
+  } catch (err) {}
+
+  loadAdminUsers();
+  loadAdminPayments();
+  loadAdminLogs();
+  loadPlansForModal();
+}
+
+let _adminSearchTimeout;
+function searchUsers() {
+  clearTimeout(_adminSearchTimeout);
+  _adminSearchTimeout = setTimeout(() => loadAdminUsers(1), 300);
+}
+
+async function loadAdminUsers(page = 1) {
+  const search = document.getElementById('admin-search').value;
+  try {
+    const data = await api(`/admin/users?page=${page}&search=${encodeURIComponent(search)}`);
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = data.users.map(u => {
+      const licBadge = u.license_status === 'active' ? '<span class="badge badge-green">Ativa</span>'
+        : u.license_status === 'trial' ? '<span class="badge badge-orange">Trial</span>'
+        : u.license_status === 'expired' ? '<span class="badge badge-red">Expirada</span>'
+        : '<span class="badge badge-gray">Nenhuma</span>';
+      const statusBadge = u.active && u.email_verified ? '<span class="badge badge-green">Ativo</span>'
+        : !u.email_verified ? '<span class="badge badge-orange">Email pendente</span>'
+        : '<span class="badge badge-red">Desativado</span>';
+      return `<tr>
+        <td><strong>${u.name}</strong>${u.role==='admin'?' <span class="badge badge-blue">Admin</span>':''}</td>
+        <td>${u.email}</td>
+        <td>${statusBadge}</td>
+        <td>${licBadge}${u.plan_type ? ' ('+u.plan_type+')' : ''}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="toggleUser(${u.id})">${u.active?'Desativar':'Ativar'}</button>
+          <button class="btn btn-sm btn-outline" onclick="openLicenseModal(${u.id})">+ Licenca</button>
+          ${u.license_id ? `<button class="btn btn-sm btn-outline" onclick="renewLicensePrompt(${u.license_id})">Renovar</button>
+          <button class="btn btn-sm btn-danger" onclick="cancelLicense(${u.license_id})">Cancelar</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Pagination
+    const pagEl = document.getElementById('users-pagination');
+    if (data.pages > 1) {
+      let btns = '';
+      for (let i = 1; i <= data.pages; i++) {
+        btns += `<button class="btn btn-sm ${i===data.page?'btn-primary':'btn-outline'}" style="min-width:36px;margin:2px;" onclick="loadAdminUsers(${i})">${i}</button>`;
+      }
+      pagEl.innerHTML = btns;
+    } else pagEl.innerHTML = '';
+  } catch (err) {}
+}
+
+async function toggleUser(id) {
+  try {
+    const data = await api(`/admin/users/${id}/toggle`, { method: 'PUT' });
+    toast(data.message);
+    loadAdminUsers();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function openLicenseModal(userId) {
+  _selectedUserId = userId;
+  document.getElementById('modal-license').classList.add('active');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+async function loadPlansForModal() {
+  try {
+    const plans = await api('/plans');
+    const sel = document.getElementById('modal-plan');
+    sel.innerHTML = plans.map(p => `<option value="${p.id}">${p.name} - R$ ${parseFloat(p.price).toFixed(2).replace('.',',')} (${p.duration_days} dias)</option>`).join('');
+  } catch (err) {}
+}
+
+async function confirmCreateLicense() {
+  try {
+    const planId = document.getElementById('modal-plan').value;
+    const data = await api('/admin/licenses', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: _selectedUserId, plan_id: parseInt(planId) }),
+    });
+    toast(data.message);
+    closeModal('modal-license');
+    loadAdminUsers();
+    loadAdminData();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function renewLicensePrompt(licenseId) {
+  const days = prompt('Quantos dias para renovar?', '30');
+  if (!days) return;
+  try {
+    const data = await api(`/admin/licenses/${licenseId}/renew`, {
+      method: 'PUT',
+      body: JSON.stringify({ days: parseInt(days) }),
+    });
+    toast(data.message);
+    loadAdminUsers();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function cancelLicense(licenseId) {
+  if (!confirm('Cancelar esta licenca?')) return;
+  try {
+    const data = await api(`/admin/licenses/${licenseId}/cancel`, { method: 'PUT' });
+    toast(data.message);
+    loadAdminUsers();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function loadAdminPayments() {
+  try {
+    const data = await api('/admin/payments');
+    document.getElementById('payments-tbody').innerHTML = data.payments.map(p => `
+      <tr>
+        <td>${new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
+        <td>${p.user_name} (${p.user_email})</td>
+        <td>R$ ${parseFloat(p.amount).toFixed(2).replace('.',',')}</td>
+        <td>${p.gateway}</td>
+        <td><span class="badge ${p.status==='approved'?'badge-green':p.status==='pending'?'badge-orange':'badge-red'}">${p.status}</span></td>
+      </tr>
+    `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-light);">Nenhum pagamento registrado.</td></tr>';
+  } catch (err) {}
+}
+
+async function loadAdminLogs() {
+  try {
+    const data = await api('/admin/logs');
+    document.getElementById('logs-tbody').innerHTML = data.map(l => `
+      <tr>
+        <td>${new Date(l.created_at).toLocaleString('pt-BR')}</td>
+        <td>${l.admin_name || '-'}</td>
+        <td>${l.action}</td>
+        <td>${l.target_name ? l.target_name+' ('+l.target_email+')' : '-'}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-light);">Nenhum log registrado.</td></tr>';
+  } catch (err) {}
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ═══════════════════════
+   INIT
+═══════════════════════ */
+(function init() {
+  // Check URL for activation token
+  const params = new URLSearchParams(window.location.search);
+  const activateToken = params.get('token');
+  const page = window.location.pathname;
+
+  if (page.includes('ativar') || activateToken) {
+    showPage('activate');
+    if (activateToken) {
+      api(`/auth/activate?token=${activateToken}`)
+        .then(data => {
+          document.getElementById('activate-title').textContent = 'Conta Ativada!';
+          document.getElementById('activate-msg').textContent = data.message;
+          document.getElementById('activate-alert').innerHTML = '<div class="alert alert-success">Sua conta foi ativada com sucesso!</div>';
+        })
+        .catch(err => {
+          document.getElementById('activate-title').textContent = 'Erro na Ativacao';
+          document.getElementById('activate-msg').textContent = err.message;
+          document.getElementById('activate-alert').innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+        });
+    }
+    return;
+  }
+
+  // Auto-login if token exists
+  if (_token && _user) {
+    enterDashboard();
+  } else {
+    showPage('login');
+  }
+})();
+</script>
+</body>
+</html>

@@ -482,6 +482,48 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
 }
 .ia-api-row input:focus { border-color:#7c3aed; }
 .ia-api-row .ia-api-hint { font-size:0.68rem; color:#aaa; }
+
+/* ── CORREÇÃO ORTOGRÁFICA ── */
+.spell-popup {
+  position:fixed; z-index:3000;
+  background:white; border:1.5px solid var(--border);
+  border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,0.18);
+  min-width:180px; max-width:280px;
+  overflow:hidden; display:none;
+  font-family:'DM Sans',sans-serif;
+}
+.spell-popup.open { display:block; }
+.spell-popup-header {
+  background:#fff5f5; padding:7px 12px;
+  font-size:0.72rem; color:#c04040; font-weight:600;
+  border-bottom:1px solid #fde0e0;
+  display:flex; align-items:center; gap:5px;
+}
+.spell-popup-list { list-style:none; max-height:200px; overflow-y:auto; }
+.spell-popup-list li {
+  padding:7px 14px; font-size:0.82rem; color:var(--ink);
+  cursor:pointer; transition:background 0.1s;
+  border-bottom:1px solid #f5f5f5;
+}
+.spell-popup-list li:last-child { border-bottom:none; }
+.spell-popup-list li:hover { background:var(--green-pale); color:var(--green-dark); }
+.spell-popup-list .spell-loading {
+  color:#aaa; font-style:italic; cursor:default; text-align:center;
+}
+.spell-popup-list .spell-loading:hover { background:none; color:#aaa; }
+.spell-popup-footer {
+  border-top:1px solid #f0f0f0; padding:5px 12px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.spell-popup-footer button {
+  background:none; border:none; font-size:0.72rem;
+  font-family:'DM Sans',sans-serif; cursor:pointer;
+  padding:3px 6px; border-radius:3px; transition:background 0.1s;
+}
+.spell-popup-footer .spell-ignore { color:#888; }
+.spell-popup-footer .spell-ignore:hover { background:#f5f5f5; }
+.spell-popup-footer .spell-close { color:#c04040; }
+.spell-popup-footer .spell-close:hover { background:#fff5f5; }
 </style>
 </head>
 <body>
@@ -538,13 +580,13 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
   <!-- CABEÇALHO -->
   <div class="doc-header">
     <div>
-      <h2 contenteditable="true" spellcheck="false">Planejamento Semanal</h2>
-      <div class="periodo">Período: <span id="periodo-span" contenteditable="true" spellcheck="false">13/04 a 17/04/2026</span></div>
+      <h2 contenteditable="true" spellcheck="true">Planejamento Semanal</h2>
+      <div class="periodo">Período: <span id="periodo-span" contenteditable="true" spellcheck="true">13/04 a 17/04/2026</span></div>
     </div>
     <div class="escola-info">
-      <span contenteditable="true" spellcheck="false">Educação Infantil</span><br>
-      Turma: <span contenteditable="true" spellcheck="false">Pré-escolar</span><br>
-      Professora: <span contenteditable="true" spellcheck="false">___________________</span>
+      <span contenteditable="true" spellcheck="true">Educação Infantil</span><br>
+      Turma: <span contenteditable="true" spellcheck="true">Pré-escolar</span><br>
+      Professora: <span contenteditable="true" spellcheck="true">___________________</span>
     </div>
   </div>
 
@@ -553,22 +595,22 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
     <div class="info-block">
       <div class="section-title">Direitos de Aprendizagem</div>
       <div class="tags" id="tags-direitos">
-        <span class="tag"><span contenteditable="true" spellcheck="false">(x) Conviver</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-        <span class="tag"><span contenteditable="true" spellcheck="false">(x) Brincar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-        <span class="tag"><span contenteditable="true" spellcheck="false">(x) Participar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-        <span class="tag"><span contenteditable="true" spellcheck="false">(x) Explorar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-        <span class="tag"><span contenteditable="true" spellcheck="false">(x) Expressar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-        <span class="tag"><span contenteditable="true" spellcheck="false">(x) Conhecer</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+        <span class="tag"><span contenteditable="true" spellcheck="true">(x) Conviver</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+        <span class="tag"><span contenteditable="true" spellcheck="true">(x) Brincar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+        <span class="tag"><span contenteditable="true" spellcheck="true">(x) Participar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+        <span class="tag"><span contenteditable="true" spellcheck="true">(x) Explorar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+        <span class="tag"><span contenteditable="true" spellcheck="true">(x) Expressar</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+        <span class="tag"><span contenteditable="true" spellcheck="true">(x) Conhecer</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
         <button class="add-inline" onclick="addDireito()">+ direito</button>
       </div>
     </div>
     <div class="info-block">
       <div class="section-title">Campos de Experiências <span style="font-size:0.65rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--green-mid);">(aplica-se a todos os dias)</span></div>
       <ul class="campos-list" id="campos-list">
-        <li><span contenteditable="true" spellcheck="false">Traços, Sons, Cores e Formas</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
-        <li><span contenteditable="true" spellcheck="false">Espaço, Tempo, Quantidades, Relações e Transformações</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
-        <li><span contenteditable="true" spellcheck="false">Corpo, Gestos e Movimentos</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
-        <li><span contenteditable="true" spellcheck="false">Escuta, Fala, Pensamento e Imaginação</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
+        <li><span contenteditable="true" spellcheck="true">Traços, Sons, Cores e Formas</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
+        <li><span contenteditable="true" spellcheck="true">Espaço, Tempo, Quantidades, Relações e Transformações</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
+        <li><span contenteditable="true" spellcheck="true">Corpo, Gestos e Movimentos</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
+        <li><span contenteditable="true" spellcheck="true">Escuta, Fala, Pensamento e Imaginação</span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
       </ul>
       <p class="campos-top-note">Os campos "O Eu, o Outro e o Nós" foram removidos dos dias — ficam apenas aqui no topo, aplicando-se a toda a semana.</p>
       <button class="add-inline" style="margin-top:8px" onclick="addCampo()">+ campo</button>
@@ -588,28 +630,28 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
       </div>
     </div>
     <div class="obj-tags" id="obj-tags">
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI01CG01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI02ET01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI01CG02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI02ET02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI01EF01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03CS01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI01EF02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03CG02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI01ET01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03EF01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI01ET02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03EF02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI02CG01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03EF03)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI02CG02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03EF04)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI02EF01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03ET01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI02EF02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03ET02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI02EF03)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
-      <span class="obj-tag"><span contenteditable="true" spellcheck="false">(EI03ET03)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI01CG01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI02ET01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI01CG02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI02ET02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI01EF01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03CS01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI01EF02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03CG02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI01ET01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03EF01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI01ET02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03EF02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI02CG01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03EF03)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI02CG02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03EF04)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI02EF01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03ET01)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI02EF02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03ET02)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI02EF03)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
+      <span class="obj-tag"><span contenteditable="true" spellcheck="true">(EI03ET03)</span><span class="del-x" onclick="this.parentElement.remove()">×</span></span>
       <button class="add-inline" onclick="addObj()">+ código</button>
     </div>
   </div>
@@ -622,7 +664,7 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
         <button onclick="fecharModalBNCC()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;line-height:1;">×</button>
       </div>
       <p class="modal-hint">Cole os códigos abaixo — separados por vírgula, espaço, ponto-e-vírgula ou quebra de linha. Ex: <code>(EI01CG01), EI02ET01 EI03CS01</code></p>
-      <textarea id="bncc-input" placeholder="Cole aqui os códigos BNCC..." spellcheck="false"></textarea>
+      <textarea id="bncc-input" placeholder="Cole aqui os códigos BNCC..." spellcheck="true"></textarea>
       <div class="modal-preview" id="modal-preview"></div>
       <div class="modal-footer">
         <span id="modal-count" style="font-size:0.78rem;color:#5a8a6a;"></span>
@@ -704,8 +746,18 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
 
   <!-- RODAPÉ -->
   <div class="doc-footer">
-    <span id="footer-semana" contenteditable="true" spellcheck="false">Semana: 13/04/2026 – 17/04/2026</span>
-    <span contenteditable="true" spellcheck="false">Educação Infantil · Pré-escolar</span>
+    <span id="footer-semana" contenteditable="true" spellcheck="true">Semana: 13/04/2026 – 17/04/2026</span>
+    <span contenteditable="true" spellcheck="true">Educação Infantil · Pré-escolar</span>
+  </div>
+</div>
+
+<!-- POPUP CORREÇÃO ORTOGRÁFICA -->
+<div class="spell-popup" id="spell-popup">
+  <div class="spell-popup-header">📝 Sugestões de correção</div>
+  <ul class="spell-popup-list" id="spell-popup-list"></ul>
+  <div class="spell-popup-footer">
+    <button class="spell-ignore" onclick="fecharSpellPopup()">Ignorar</button>
+    <button class="spell-close" onclick="fecharSpellPopup()">✕ Fechar</button>
   </div>
 </div>
 
@@ -890,7 +942,7 @@ function sincronizarTabela() {
     let html = `<td class="td-data">
         <div class="td-data-inner">
           <span class="day-label">${nomeDia}</span>
-          <span contenteditable="true" spellcheck="false">${dataTxt}</span>
+          <span contenteditable="true" spellcheck="true">${dataTxt}</span>
           <button class="del-row-btn" onclick="this.closest('tr').remove()">✕ linha</button>
         </div>
       </td>`;
@@ -931,7 +983,7 @@ function aplicarSemana() {
 
 function gerarCelulaVazia() {
   return `<ul class="cell-list">
-    <li><span contenteditable="true" spellcheck="false"></span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
+    <li><span contenteditable="true" spellcheck="true"></span><span class="del-x" onclick="this.parentElement.remove()">×</span></li>
   </ul>
   <button class="add-li" onclick="addLi(this)">+ item</button>`;
 }
@@ -964,7 +1016,7 @@ function renderHeader() {
 
     th.innerHTML = `
       <div class="th-inner">
-        <span class="th-label" contenteditable="true" spellcheck="false">${col.label}</span>
+        <span class="th-label" contenteditable="true" spellcheck="true">${col.label}</span>
         <div class="th-controls">
           <button class="th-ctrl-btn" title="Mover esquerda" onclick="moverColuna(${idx},-1)" ${canMoveLeft?'':'style="opacity:0.2;pointer-events:none;"'}>◀</button>
           <button class="th-ctrl-btn del" title="Remover coluna" onclick="removerColuna(${idx})" ${canDelete?'':'style="opacity:0.2;pointer-events:none;"'}>×</button>
@@ -1068,7 +1120,7 @@ function _onResizeUp() {
 function addLi(btn) {
   const ul = btn.previousElementSibling;
   const li = document.createElement('li');
-  li.innerHTML = `<span contenteditable="true" spellcheck="false"></span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+  li.innerHTML = `<span contenteditable="true" spellcheck="true"></span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
   ul.appendChild(li);
   li.querySelector('[contenteditable]').focus();
 }
@@ -1081,7 +1133,7 @@ document.addEventListener('keydown', e => {
   if (!li || !li.parentElement.classList.contains('cell-list')) return;
   e.preventDefault();
   const newLi = document.createElement('li');
-  newLi.innerHTML = `<span contenteditable="true" spellcheck="false"></span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+  newLi.innerHTML = `<span contenteditable="true" spellcheck="true"></span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
   li.after(newLi);
   newLi.querySelector('[contenteditable]').focus();
 });
@@ -1092,7 +1144,7 @@ function adicionarLinha() {
   // primeira célula = data
   let cellsHtml = `<td class="td-data"><div class="td-data-inner">
     <span class="day-label">Dia extra</span>
-    <span contenteditable="true" spellcheck="false">__/__/____</span>
+    <span contenteditable="true" spellcheck="true">__/__/____</span>
     <button class="del-row-btn" onclick="this.closest('tr').remove()">✕ linha</button>
   </div></td>`;
   // demais colunas
@@ -1110,7 +1162,7 @@ function addDireito() {
   const btn = c.querySelector('.add-inline');
   const s = document.createElement('span');
   s.className = 'tag';
-  s.innerHTML = `<span contenteditable="true" spellcheck="false">novo</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+  s.innerHTML = `<span contenteditable="true" spellcheck="true">novo</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
   c.insertBefore(s, btn);
   s.querySelector('[contenteditable]').focus();
 }
@@ -1118,7 +1170,7 @@ function addDireito() {
 function addCampo() {
   const ul = document.getElementById('campos-list');
   const li = document.createElement('li');
-  li.innerHTML = `<span contenteditable="true" spellcheck="false">Novo campo</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+  li.innerHTML = `<span contenteditable="true" spellcheck="true">Novo campo</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
   ul.appendChild(li);
   li.querySelector('[contenteditable]').focus();
 }
@@ -1128,7 +1180,7 @@ function addObj() {
   const btn = c.querySelector('.add-inline');
   const s = document.createElement('span');
   s.className = 'obj-tag';
-  s.innerHTML = `<span contenteditable="true" spellcheck="false">(EIxxxx)</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+  s.innerHTML = `<span contenteditable="true" spellcheck="true">(EIxxxx)</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
   c.insertBefore(s, btn);
   s.querySelector('[contenteditable]').focus();
 }
@@ -1194,7 +1246,7 @@ function confirmarBNCC() {
     if (existentes.has(codigo)) return;
     const s = document.createElement('span');
     s.className = 'obj-tag';
-    s.innerHTML = `<span contenteditable="true" spellcheck="false">(${codigo})</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+    s.innerHTML = `<span contenteditable="true" spellcheck="true">(${codigo})</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
     c.insertBefore(s, btn);
     adicionados++;
   });
@@ -1373,7 +1425,7 @@ function inserirNaTabela() {
     const ul = cell.querySelector('.cell-list');
     if (ul) {
       const li = document.createElement('li');
-      li.innerHTML = `<span contenteditable="true" spellcheck="false">${text.substring(0, 500)}${text.length > 500 ? '...' : ''}</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+      li.innerHTML = `<span contenteditable="true" spellcheck="true">${text.substring(0, 500)}${text.length > 500 ? '...' : ''}</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
       ul.appendChild(li);
       showToast('✓ Inserido na última linha!');
     }
@@ -1389,6 +1441,143 @@ function showToast(msg) {
 }
 
 /* ══════════════════════════════
+   CORREÇÃO ORTOGRÁFICA PT-BR
+══════════════════════════════ */
+let _spellTarget = null; // { node, word, range }
+const _spellIgnored = new Set();
+
+function getWordAtClick(e) {
+  const el = e.target.closest('[contenteditable="true"]');
+  if (!el) return null;
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  const range = sel.getRangeAt(0);
+  if (!range.collapsed) return null;
+
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return null;
+  const text = node.textContent;
+  let start = range.startOffset;
+  let end = range.startOffset;
+
+  while (start > 0 && /[\wÀ-ÿ]/.test(text[start - 1])) start--;
+  while (end < text.length && /[\wÀ-ÿ]/.test(text[end])) end++;
+
+  const word = text.slice(start, end).trim();
+  if (word.length < 2) return null;
+  if (/^\d+$/.test(word)) return null;
+
+  const wordRange = document.createRange();
+  wordRange.setStart(node, start);
+  wordRange.setEnd(node, end);
+
+  return { node, word, start, end, range: wordRange, editableEl: el };
+}
+
+async function verificarOrtografia(word) {
+  const apiKey = _GEMINI_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: 'Você é um corretor ortográfico de português brasileiro. Responda APENAS em JSON.' }] },
+        contents: [{ parts: [{ text: `Verifique se a palavra "${word}" está correta em português brasileiro. 
+Responda APENAS com JSON no formato: {"correto": true} ou {"correto": false, "sugestoes": ["palavra1","palavra2","palavra3"]}
+Se a palavra for um nome próprio, sigla, abreviação ou código, considere correta.
+Dê no máximo 5 sugestões ordenadas por probabilidade.` }] }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 200 }
+      })
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    return JSON.parse(jsonMatch[0]);
+  } catch (e) {
+    return null;
+  }
+}
+
+function abrirSpellPopup(e) {
+  const info = getWordAtClick(e);
+  if (!info) return;
+  if (_spellIgnored.has(info.word.toLowerCase())) return;
+
+  _spellTarget = info;
+  const popup = document.getElementById('spell-popup');
+  const list = document.getElementById('spell-popup-list');
+
+  list.innerHTML = '<li class="spell-loading">Verificando...</li>';
+  popup.classList.add('open');
+
+  const rect = info.range.getBoundingClientRect();
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  if (top + 250 > window.innerHeight) top = rect.top - 250;
+  if (left + 200 > window.innerWidth) left = window.innerWidth - 210;
+  popup.style.top = top + 'px';
+  popup.style.left = Math.max(4, left) + 'px';
+
+  verificarOrtografia(info.word).then(result => {
+    if (!result) {
+      list.innerHTML = '<li class="spell-loading">Não foi possível verificar</li>';
+      setTimeout(fecharSpellPopup, 1500);
+      return;
+    }
+    if (result.correto) {
+      list.innerHTML = '<li class="spell-loading">✓ Palavra correta!</li>';
+      setTimeout(fecharSpellPopup, 1200);
+      return;
+    }
+    if (!result.sugestoes || !result.sugestoes.length) {
+      list.innerHTML = '<li class="spell-loading">Sem sugestões encontradas</li>';
+      return;
+    }
+    list.innerHTML = result.sugestoes.map(s =>
+      `<li onclick="aplicarCorrecao('${s.replace(/'/g, "\\'")}')">${s}</li>`
+    ).join('');
+  });
+}
+
+function aplicarCorrecao(novaPalavra) {
+  if (!_spellTarget) return;
+  const { node, start, end } = _spellTarget;
+  const text = node.textContent;
+  node.textContent = text.slice(0, start) + novaPalavra + text.slice(end);
+  fecharSpellPopup();
+  showToast('✓ Corrigido!');
+}
+
+function fecharSpellPopup() {
+  document.getElementById('spell-popup').classList.remove('open');
+  _spellTarget = null;
+}
+
+// Clique duplo em palavras dentro de contenteditable abre verificação
+document.addEventListener('dblclick', e => {
+  if (!e.target.closest('[contenteditable="true"]')) return;
+  e.preventDefault();
+  abrirSpellPopup(e);
+});
+
+// Fechar popup ao clicar fora
+document.addEventListener('click', e => {
+  if (!e.target.closest('.spell-popup') && !e.target.closest('[contenteditable="true"]')) {
+    fecharSpellPopup();
+  }
+});
+
+// Fechar com Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharSpellPopup();
+});
+
+/* ══════════════════════════════
    INIT
 ══════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
@@ -1396,7 +1585,6 @@ window.addEventListener('DOMContentLoaded', () => {
   initDateInput();
   aplicarSemana();
   carregarFonte();
-
 });
 
 // Quando muda a data, reconstrói os toggles

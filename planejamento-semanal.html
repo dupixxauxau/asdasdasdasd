@@ -1676,17 +1676,26 @@ function getWordAtClick(e) {
   const sel = window.getSelection();
   if (!sel.rangeCount) return null;
   const range = sel.getRangeAt(0);
-  if (!range.collapsed) return null;
 
-  const node = range.startContainer;
-  if (node.nodeType !== Node.TEXT_NODE) return null;
+  let node, start, end;
+  if (!range.collapsed && sel.toString().trim().length >= 2) {
+    node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) return null;
+    start = range.startOffset;
+    end = range.endContainer === node ? range.endOffset : node.textContent.length;
+  } else if (range.collapsed) {
+    node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) return null;
+    const text = node.textContent;
+    start = range.startOffset;
+    end = range.startOffset;
+    while (start > 0 && /[\wÀ-ÿ]/.test(text[start - 1])) start--;
+    while (end < text.length && /[\wÀ-ÿ]/.test(text[end])) end++;
+  } else {
+    return null;
+  }
+
   const text = node.textContent;
-  let start = range.startOffset;
-  let end = range.startOffset;
-
-  while (start > 0 && /[\wÀ-ÿ]/.test(text[start - 1])) start--;
-  while (end < text.length && /[\wÀ-ÿ]/.test(text[end])) end++;
-
   const word = text.slice(start, end).trim();
   if (word.length < 2) return null;
   if (/^\d+$/.test(word)) return null;

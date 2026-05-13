@@ -539,7 +539,7 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
 /* texto não compreendido pela IA = vermelho só na edição */
 .ia-nao-compreendido { color:#c04040 !important; }
 /* na impressão/PDF: tudo preto */
-@media print { .ia-nao-compreendido { color:var(--ink) !important; } }
+@media print { .ia-nao-compreendido { color:var(--ink) !important; } .ia-panel { display:none !important; } }
 </style>
 </head>
 <body>
@@ -1301,6 +1301,10 @@ async function exportarPDF() {
   const controls = document.querySelectorAll('.del-x, .del-row-btn, .add-li, .add-inline, .btn-group, .hint-bar, .week-config, .bncc-auto-btn');
   controls.forEach(el => { el._vis = el.style.visibility; el.style.visibility = 'hidden'; });
 
+  const iaPanel = document.getElementById('ia-panel');
+  const iaPanelVis = iaPanel ? iaPanel.style.display : '';
+  if (iaPanel) iaPanel.style.display = 'none';
+
   // remover vermelho para impressão
   const vermelhos = document.querySelectorAll('.ia-nao-compreendido');
   vermelhos.forEach(el => el.classList.remove('ia-nao-compreendido'));
@@ -1343,6 +1347,7 @@ async function exportarPDF() {
   } finally {
     document.getElementById('loading').classList.remove('show');
     controls.forEach(el => { el.style.visibility = el._vis || ''; });
+    if (iaPanel) iaPanel.style.display = iaPanelVis;
     // restaurar vermelho após PDF
     if (typeof _hadVermelhos !== 'undefined') {
       _hadVermelhos.forEach(el => el.classList.add('ia-nao-compreendido'));

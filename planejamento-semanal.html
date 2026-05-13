@@ -524,6 +524,27 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
 .spell-popup-footer .spell-ignore:hover { background:#f5f5f5; }
 .spell-popup-footer .spell-close { color:#c04040; }
 .spell-popup-footer .spell-close:hover { background:#fff5f5; }
+
+/* ── BNCC AUTO ── */
+.bncc-auto-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  background:linear-gradient(135deg,#7c3aed,#6d28d9); color:white;
+  border:none; border-radius:5px; padding:5px 12px;
+  font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:600;
+  cursor:pointer; transition:opacity 0.15s;
+}
+.bncc-auto-btn:hover { opacity:0.9; }
+.bncc-auto-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.bncc-badge {
+  display:inline-block; background:#ede9fe; color:#6d28d9;
+  border:1px solid #ddd6fe; border-radius:4px;
+  padding:1px 6px; font-size:0.68rem; font-weight:600;
+  margin-left:4px; vertical-align:middle;
+}
+/* texto não compreendido pela IA = vermelho só na edição */
+.ia-nao-compreendido { color:#c04040 !important; }
+/* na impressão/PDF: tudo preto */
+@media print { .ia-nao-compreendido { color:var(--ink) !important; } }
 </style>
 </head>
 <body>
@@ -682,6 +703,9 @@ tr.sabado-row .day-label { color:var(--sat-color); opacity:0.8; }
     <button class="tbl-btn" onclick="adicionarColuna()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Nova coluna
+    </button>
+    <button class="bncc-auto-btn" id="btn-bncc-auto" onclick="analisarBNCC_todos()">
+      🧠 Analisar BNCC automático
     </button>
     <span class="table-toolbar-sep"></span>
     <span class="table-toolbar-hint" style="opacity:0.65;">Clique no &#9998; para renomear &bull; &#8592; &#8594; para mover &bull; &#215; para remover</span>
@@ -1280,8 +1304,13 @@ document.addEventListener('click', e => {
    EXPORT PDF
 ══════════════════════════════ */
 async function exportarPDF() {
-  const controls = document.querySelectorAll('.del-x, .del-row-btn, .add-li, .add-inline, .btn-group, .hint-bar, .week-config');
+  const controls = document.querySelectorAll('.del-x, .del-row-btn, .add-li, .add-inline, .btn-group, .hint-bar, .week-config, .bncc-auto-btn');
   controls.forEach(el => { el._vis = el.style.visibility; el.style.visibility = 'hidden'; });
+
+  // remover vermelho para impressão
+  const vermelhos = document.querySelectorAll('.ia-nao-compreendido');
+  vermelhos.forEach(el => el.classList.remove('ia-nao-compreendido'));
+  const _hadVermelhos = [...vermelhos];
 
   document.getElementById('loading').classList.add('show');
   await new Promise(r => setTimeout(r, 150));
@@ -1320,6 +1349,10 @@ async function exportarPDF() {
   } finally {
     document.getElementById('loading').classList.remove('show');
     controls.forEach(el => { el.style.visibility = el._vis || ''; });
+    // restaurar vermelho após PDF
+    if (typeof _hadVermelhos !== 'undefined') {
+      _hadVermelhos.forEach(el => el.classList.add('ia-nao-compreendido'));
+    }
   }
 }
 
@@ -1438,6 +1471,154 @@ function showToast(msg) {
   tip.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:white;padding:9px 20px;border-radius:7px;font-size:0.82rem;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,0.15);pointer-events:none;';
   document.body.appendChild(tip);
   setTimeout(() => tip.remove(), 2500);
+}
+
+/* ══════════════════════════════
+   ANÁLISE BNCC AUTOMÁTICA
+══════════════════════════════ */
+async function analisarBNCC_todos() {
+  const btn = document.getElementById('btn-bncc-auto');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analisando...';
+
+  const rows = document.querySelectorAll('#tbody tr');
+  if (!rows.length) {
+    showToast('Gere a semana primeiro.');
+    btn.disabled = false;
+    btn.textContent = '🧠 Analisar BNCC automático';
+    return;
+  }
+
+  for (const tr of rows) {
+    await analisarBNCC_linha(tr);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🧠 Analisar BNCC automático';
+  showToast('✓ Análise BNCC concluída!');
+}
+
+async function analisarBNCC_linha(tr) {
+  // coletar texto de todas as células (exceto a primeira que é a data)
+  let conteudoDia = '';
+  for (let i = 1; i < tr.cells.length; i++) {
+    const cell = tr.cells[i];
+    const items = cell.querySelectorAll('.cell-list li [contenteditable]');
+    items.forEach(item => {
+      const txt = item.textContent.trim();
+      if (txt) conteudoDia += txt + '. ';
+    });
+  }
+
+  if (!conteudoDia.trim()) {
+    // sem conteúdo: marcar em vermelho
+    marcarNaoCompreendido(tr, true);
+    return;
+  }
+
+  try {
+    const resultado = await consultarBNCC(conteudoDia);
+    if (!resultado || !resultado.codigos || !resultado.codigos.length) {
+      marcarNaoCompreendido(tr, true);
+      return;
+    }
+
+    // conteúdo compreendido: remover vermelho
+    marcarNaoCompreendido(tr, false);
+
+    // adicionar códigos BNCC encontrados na seção de objetivos
+    const objContainer = document.getElementById('obj-tags');
+    const addBtn = objContainer.querySelector('.add-inline');
+    const existentes = new Set(
+      [...objContainer.querySelectorAll('.obj-tag [contenteditable]')]
+        .map(el => el.textContent.trim().replace(/[()]/g,'').toUpperCase())
+    );
+
+    resultado.codigos.forEach(codigo => {
+      const cod = codigo.replace(/[()]/g,'').toUpperCase();
+      if (existentes.has(cod)) return;
+      existentes.add(cod);
+      const s = document.createElement('span');
+      s.className = 'obj-tag';
+      s.innerHTML = `<span contenteditable="true" spellcheck="true">(${cod})</span><span class="del-x" onclick="this.parentElement.remove()">×</span>`;
+      objContainer.insertBefore(s, addBtn);
+    });
+
+    // adicionar badge com códigos na célula de data da linha
+    const dataCell = tr.cells[0];
+    let badgeContainer = dataCell.querySelector('.bncc-badges');
+    if (!badgeContainer) {
+      badgeContainer = document.createElement('div');
+      badgeContainer.className = 'bncc-badges';
+      badgeContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;';
+      dataCell.querySelector('.td-data-inner').appendChild(badgeContainer);
+    }
+    badgeContainer.innerHTML = '';
+    resultado.codigos.forEach(cod => {
+      const badge = document.createElement('span');
+      badge.className = 'bncc-badge';
+      badge.textContent = cod;
+      badgeContainer.appendChild(badge);
+    });
+
+  } catch (e) {
+    marcarNaoCompreendido(tr, true);
+  }
+}
+
+function marcarNaoCompreendido(tr, ativar) {
+  for (let i = 1; i < tr.cells.length; i++) {
+    const items = tr.cells[i].querySelectorAll('.cell-list li [contenteditable]');
+    items.forEach(item => {
+      if (ativar && item.textContent.trim()) {
+        item.classList.add('ia-nao-compreendido');
+      } else {
+        item.classList.remove('ia-nao-compreendido');
+      }
+    });
+  }
+}
+
+async function consultarBNCC(conteudo) {
+  const apiKey = _GEMINI_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: `Você é uma pedagoga especialista em Educação Infantil e BNCC. Analise o conteúdo das atividades e identifique os códigos BNCC (Objetivos de Aprendizagem e Desenvolvimento) da Educação Infantil que correspondem.
+Os códigos BNCC da Educação Infantil seguem o padrão: EIxxYYzz onde:
+- EI = Educação Infantil
+- xx = faixa etária (01=bebês, 02=crianças bem pequenas, 03=crianças pequenas)
+- YY = campo de experiência (EO=Eu/Outro/Nós, CG=Corpo/Gestos/Movimentos, TS=Traços/Sons/Cores, EF=Escuta/Fala/Pensamento, ET=Espaço/Tempo/Quantidades)
+- zz = número sequencial
+Responda APENAS em JSON.` }] },
+        contents: [{ parts: [{ text: `Analise este conteúdo de atividade de Educação Infantil e identifique os códigos BNCC correspondentes:
+
+"${conteudo}"
+
+Se você conseguir identificar o conteúdo, responda com:
+{"compreendido": true, "codigos": ["EI01CG01", "EI02EF01"], "justificativa": "breve explicação"}
+
+Se o conteúdo estiver vazio, ilegível ou não fizer sentido pedagógico, responda com:
+{"compreendido": false, "codigos": [], "justificativa": "motivo"}` }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
+      })
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    const result = JSON.parse(jsonMatch[0]);
+    if (!result.compreendido) return null;
+    return result;
+  } catch (e) {
+    return null;
+  }
 }
 
 /* ══════════════════════════════

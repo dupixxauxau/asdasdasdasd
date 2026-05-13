@@ -380,9 +380,7 @@ body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); 
 /* ═══════════════════════
    CONFIG
 ═══════════════════════ */
-const API = window.location.hostname === 'localhost'
-  ? 'http://localhost:3001/api'
-  : '/api';
+const API = '/api';
 
 let _token = localStorage.getItem('token');
 let _user = JSON.parse(localStorage.getItem('user') || 'null');

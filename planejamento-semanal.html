@@ -1412,23 +1412,14 @@ async function gerarSugestaoIA() {
   resultDiv.innerHTML = '<span class="placeholder">Consultando IA, aguarde...</span>';
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ parts: [{ text: userPrompt }] }],
-        generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
-      })
+    const raw = await _geminiCall({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ parts: [{ text: userPrompt }] }],
+      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
     });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Erro HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nenhuma resposta gerada.';
+    if (!raw) throw new Error('Sem resposta da API.');
+    if (raw._apiError) throw new Error(raw._apiError);
+    const text = raw.candidates?.[0]?.content?.parts?.[0]?.text || 'Nenhuma resposta gerada.';
     resultDiv.textContent = text;
   } catch (err) {
     resultDiv.innerHTML = `<span style="color:#c04040;">❌ Erro: ${err.message}</span>`;
@@ -1466,20 +1457,24 @@ function inserirNaTabela() {
 }
 
 function showToast(msg) {
+  const isError = msg.includes('⚠️') || msg.includes('Erro');
   const tip = document.createElement('div');
   tip.textContent = msg;
-  tip.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:white;padding:9px 20px;border-radius:7px;font-size:0.82rem;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,0.15);pointer-events:none;';
+  tip.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:${isError ? '#c04040' : 'var(--green-dark)'};color:white;padding:9px 20px;border-radius:7px;font-size:0.82rem;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,0.15);pointer-events:none;max-width:90%;text-align:center;`;
   document.body.appendChild(tip);
-  setTimeout(() => tip.remove(), 2500);
+  setTimeout(() => tip.remove(), isError ? 5000 : 2500);
 }
 
 /* ══════════════════════════════
    ANÁLISE BNCC AUTOMÁTICA
 ══════════════════════════════ */
+let _bnccApiError = false;
+
 async function analisarBNCC_todos() {
   const btn = document.getElementById('btn-bncc-auto');
   btn.disabled = true;
   btn.textContent = '⏳ Analisando...';
+  _bnccApiError = false;
 
   const rows = document.querySelectorAll('#tbody tr');
   if (!rows.length) {
@@ -1491,11 +1486,12 @@ async function analisarBNCC_todos() {
 
   for (const tr of rows) {
     await analisarBNCC_linha(tr);
+    if (_bnccApiError) break;
   }
 
   btn.disabled = false;
   btn.textContent = '🧠 Analisar BNCC automático';
-  showToast('✓ Análise BNCC concluída!');
+  if (!_bnccApiError) showToast('✓ Análise BNCC concluída!');
 }
 
 async function analisarBNCC_linha(tr) {
@@ -1511,13 +1507,16 @@ async function analisarBNCC_linha(tr) {
   }
 
   if (!conteudoDia.trim()) {
-    // sem conteúdo: marcar em vermelho
-    marcarNaoCompreendido(tr, true);
     return;
   }
 
   try {
     const resultado = await consultarBNCC(conteudoDia);
+    if (resultado && resultado._apiError) {
+      _bnccApiError = true;
+      showToast('⚠️ Erro na API: ' + (resultado._apiError));
+      return;
+    }
     if (!resultado || !resultado.codigos || !resultado.codigos.length) {
       marcarNaoCompreendido(tr, true);
       return;
@@ -1579,23 +1578,43 @@ function marcarNaoCompreendido(tr, ativar) {
   }
 }
 
-async function consultarBNCC(conteudo) {
+const _GEMINI_MODELS = ['gemini-2.0-flash-lite', 'gemini-2.0-flash'];
+let _currentModelIdx = 0;
+
+async function _geminiCall(body) {
   const apiKey = _GEMINI_KEY;
   if (!apiKey) return null;
+  for (let attempt = 0; attempt < _GEMINI_MODELS.length; attempt++) {
+    const modelIdx = (_currentModelIdx + attempt) % _GEMINI_MODELS.length;
+    const model = _GEMINI_MODELS[modelIdx];
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (response.status === 429) continue;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        return { _apiError: errData?.error?.message?.substring(0, 80) || ('Erro ' + response.status) };
+      }
+      _currentModelIdx = modelIdx;
+      return await response.json();
+    } catch (e) { continue; }
+  }
+  return { _apiError: 'Cota da API esgotada em todos os modelos. Aguarde ou use outra chave.' };
+}
 
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: `Você é uma pedagoga especialista em Educação Infantil e BNCC. Analise o conteúdo das atividades e identifique os códigos BNCC (Objetivos de Aprendizagem e Desenvolvimento) da Educação Infantil que correspondem.
+async function consultarBNCC(conteudo) {
+  const raw = await _geminiCall({
+    system_instruction: { parts: [{ text: `Você é uma pedagoga especialista em Educação Infantil e BNCC. Analise o conteúdo das atividades e identifique os códigos BNCC (Objetivos de Aprendizagem e Desenvolvimento) da Educação Infantil que correspondem.
 Os códigos BNCC da Educação Infantil seguem o padrão: EIxxYYzz onde:
 - EI = Educação Infantil
 - xx = faixa etária (01=bebês, 02=crianças bem pequenas, 03=crianças pequenas)
 - YY = campo de experiência (EO=Eu/Outro/Nós, CG=Corpo/Gestos/Movimentos, TS=Traços/Sons/Cores, EF=Escuta/Fala/Pensamento, ET=Espaço/Tempo/Quantidades)
 - zz = número sequencial
 Responda APENAS em JSON.` }] },
-        contents: [{ parts: [{ text: `Analise este conteúdo de atividade de Educação Infantil e identifique os códigos BNCC correspondentes:
+    contents: [{ parts: [{ text: `Analise este conteúdo de atividade de Educação Infantil e identifique os códigos BNCC correspondentes:
 
 "${conteudo}"
 
@@ -1604,21 +1623,18 @@ Se você conseguir identificar o conteúdo, responda com:
 
 Se o conteúdo estiver vazio, ilegível ou não fizer sentido pedagógico, responda com:
 {"compreendido": false, "codigos": [], "justificativa": "motivo"}` }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
-      })
-    });
-
-    if (!response.ok) return null;
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
+  });
+  if (!raw) return null;
+  if (raw._apiError) return raw;
+  try {
+    const text = raw.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     const result = JSON.parse(jsonMatch[0]);
     if (!result.compreendido) return null;
     return result;
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 }
 
 /* ══════════════════════════════
@@ -1656,32 +1672,21 @@ function getWordAtClick(e) {
 }
 
 async function verificarOrtografia(word) {
-  const apiKey = _GEMINI_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: 'Você é um corretor ortográfico de português brasileiro. Responda APENAS em JSON.' }] },
-        contents: [{ parts: [{ text: `Verifique se a palavra "${word}" está correta em português brasileiro. 
+  const raw = await _geminiCall({
+    system_instruction: { parts: [{ text: 'Você é um corretor ortográfico de português brasileiro. Responda APENAS em JSON.' }] },
+    contents: [{ parts: [{ text: `Verifique se a palavra "${word}" está correta em português brasileiro. 
 Responda APENAS com JSON no formato: {"correto": true} ou {"correto": false, "sugestoes": ["palavra1","palavra2","palavra3"]}
 Se a palavra for um nome próprio, sigla, abreviação ou código, considere correta.
 Dê no máximo 5 sugestões ordenadas por probabilidade.` }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 200 }
-      })
-    });
-
-    if (!response.ok) return null;
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    generationConfig: { temperature: 0.1, maxOutputTokens: 200 }
+  });
+  if (!raw || raw._apiError) return null;
+  try {
+    const text = raw.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     return JSON.parse(jsonMatch[0]);
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 }
 
 function abrirSpellPopup(e) {

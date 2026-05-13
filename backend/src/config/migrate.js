@@ -6,7 +6,7 @@ const migrate = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS plans (
       id SERIAL PRIMARY KEY,
-      name VARCHAR(50) NOT NULL,
+      name VARCHAR(50) UNIQUE NOT NULL,
       duration_days INTEGER NOT NULL,
       price DECIMAL(10,2) NOT NULL,
       active BOOLEAN DEFAULT true,
@@ -63,6 +63,20 @@ const migrate = async () => {
     CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_users_email_token ON users(email_token);
+  `);
+
+  // Clean duplicate plans (if any from previous runs)
+  await pool.query(`
+    DELETE FROM plans WHERE id NOT IN (SELECT MIN(id) FROM plans GROUP BY name);
+  `);
+
+  // Add unique constraint on plans.name if not exists
+  await pool.query(`
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'plans_name_key') THEN
+        ALTER TABLE plans ADD CONSTRAINT plans_name_key UNIQUE (name);
+      END IF;
+    END $$;
   `);
 
   console.log('Migrations completed successfully!');

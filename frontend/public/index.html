@@ -470,7 +470,8 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         password: document.getElementById('register-password').value,
       }),
     });
-    alertEl.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+    alertEl.innerHTML = `<div class="alert alert-success">${data.message}</div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="showPage('login')">Fazer Login</button>`;
     document.getElementById('register-form').reset();
   } catch (err) {
     alertEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
